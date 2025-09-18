@@ -164,6 +164,19 @@
       <div class="space-y-4">
         <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
           <div class="flex-1">
+            <div class="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">复习自动更新</div>
+            <div class="text-xs text-slate-500 dark:text-slate-400">保存笔记后如何处理复习内容：手动、全部自动、仅带标记自动</div>
+          </div>
+          <div class="ml-4">
+            <select v-model="local.reviewMode" class="px-3 py-2 text-sm rounded-lg bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600">
+              <option value="manual">手动</option>
+              <option value="auto-all">全部自动</option>
+              <option value="auto-tagged">仅带标记</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700">
+          <div class="flex-1">
             <div class="text-sm font-medium text-slate-800 dark:text-slate-200 mb-1">
               {{ t('settings.keepSessionOnWorkspaceChange') }}
             </div>
@@ -222,7 +235,8 @@ const local = reactive({
   theme: 'system' as 'system' | 'light' | 'dark',
   workspacePath: '',
   editor: { fontSize: 14, lineHeight: 1.6, autosave: 'off' as 'off' | 'afterDelay' },
-  keepSessionOnWorkspaceChange: true
+  keepSessionOnWorkspaceChange: true,
+  reviewMode: 'manual' as 'manual' | 'auto-all' | 'auto-tagged',
 });
 
 let applying = false;
@@ -238,6 +252,7 @@ watch(
       local.workspacePath = d.workspacePath;
       local.editor = { ...local.editor, ...d.editor } as any;
       local.keepSessionOnWorkspaceChange = !!d.session?.keepOnWorkspaceChange;
+      local.reviewMode = (d.review?.autoMode as any) || 'manual';
       await nextTick();
       applying = false;
     }
@@ -246,7 +261,7 @@ watch(
 );
 
 watch(
-  () => ({ language: local.language, theme: local.theme, workspacePath: local.workspacePath, session: { keepOnWorkspaceChange: local.keepSessionOnWorkspaceChange }, editor: local.editor }),
+  () => ({ language: local.language, theme: local.theme, workspacePath: local.workspacePath, session: { keepOnWorkspaceChange: local.keepSessionOnWorkspaceChange }, editor: local.editor, review: { autoMode: local.reviewMode } }),
   (val) => {
     if (applying) return;
     const payload = JSON.parse(JSON.stringify(val));

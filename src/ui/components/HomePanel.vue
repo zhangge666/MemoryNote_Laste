@@ -237,7 +237,7 @@ async function open(file: string) {
 }
 
 async function createNote() {
-  const name = prompt('Note name (e.g., my-note.md):') || 'untitled.md';
+  let name = prompt('Note name (e.g., my-note.md):') || 'untitled.md';
   if (!name.includes('.')) name += '.md';
   const fullPath = `${workspacePath.value}/${name}`;
   await window.mn.ipc.invoke('file:create', fullPath, false);

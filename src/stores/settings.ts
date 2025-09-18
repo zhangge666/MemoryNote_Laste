@@ -7,6 +7,7 @@ export interface AppSettings {
   editor: { fontSize: number; lineHeight: number; autosave: 'off' | 'afterDelay' };
   search: { provider: 'local'; topK: number };
   llm: { provider: string; baseURL: string; model: string };
+  review?: { autoMode: 'manual' | 'auto-all' | 'auto-tagged' };
 }
 
 export const useSettingsStore = defineStore('settings', {

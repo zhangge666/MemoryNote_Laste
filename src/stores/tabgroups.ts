@@ -8,6 +8,9 @@ export interface TabItem {
   dirty?: boolean;
   cursorOffset?: number;
   scrollTop?: number;
+  // optional highlight/selection range in UTF-16 offsets
+  selectionStart?: number;
+  selectionEnd?: number;
   view?: 'home' | 'subscriptions' | 'journal' | 'settings';
 }
 
@@ -153,6 +156,15 @@ export const useTabGroupsStore = defineStore('tabgroups', {
       if (tab) {
         tab.content = content;
         tab.dirty = true;
+      }
+    },
+    setSelection(leafId: string, id: string, start: number, end: number) {
+      const leaf = this.findLeaf(leafId);
+      if (!leaf) return;
+      const tab = leaf.items.find((i: TabItem) => i.id === id);
+      if (tab) {
+        tab.selectionStart = Math.max(0, Math.min(start, end));
+        tab.selectionEnd = Math.max(0, Math.max(start, end));
       }
     },
     close(leafId: string, id: string) {

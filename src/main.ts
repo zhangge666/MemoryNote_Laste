@@ -2,6 +2,9 @@ import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 import fs from 'node:fs';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const Database = require('better-sqlite3');
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -576,6 +579,228 @@ app.on('ready', () => {
   ipcMain.handle('system:openPath', async (_e, filePath: string) => {
     const { shell } = require('electron');
     await shell.openPath(path.resolve(filePath));
+  });
+
+  // --- Review (SQLite local persistence) ---
+  const reviewDbPath = path.join(CONFIG_DIR!, 'review.db');
+  const db = new Database(reviewDbPath);
+  db.pragma('journal_mode = WAL');
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS cards (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      content TEXT NOT NULL,
+      path TEXT,
+      archived INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS anchors (
+      card_id TEXT NOT NULL,
+      path TEXT,
+      start INTEGER,
+      end INTEGER,
+      anchor_before TEXT,
+      anchor_after TEXT,
+      hash TEXT,
+      PRIMARY KEY(card_id)
+    );
+    CREATE TABLE IF NOT EXISTS schedules (
+      card_id TEXT PRIMARY KEY,
+      next_review_at INTEGER NOT NULL,
+      interval_days INTEGER NOT NULL,
+      ease REAL NOT NULL,
+      repetitions INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS reviews (
+      id TEXT PRIMARY KEY,
+      card_id TEXT NOT NULL,
+      reviewed_at INTEGER NOT NULL,
+      quality INTEGER NOT NULL,
+      interval_after INTEGER NOT NULL,
+      ease_after REAL NOT NULL
+    );
+  `);
+
+  function uuid() { try { return crypto.randomUUID(); } catch { return Math.random().toString(36).slice(2); } }
+
+  ipcMain.handle('review:init', async () => {
+    return { ok: true, path: reviewDbPath } as const;
+  });
+
+  ipcMain.handle('review:cards:listAll', async () => {
+    const rows = db.prepare(`
+      SELECT c.id, c.title, c.content, c.path, c.archived, s.next_review_at, s.interval_days, s.ease, s.repetitions
+      FROM cards c LEFT JOIN schedules s ON s.card_id=c.id
+      WHERE c.archived=0
+      ORDER BY IFNULL(s.next_review_at, 0) ASC
+    `).all();
+    return rows;
+  });
+
+  ipcMain.handle('review:cards:due', async (_e, now?: number, limit = 100) => {
+    const ts = typeof now === 'number' ? now : Date.now();
+    const rows = db.prepare(`
+      SELECT c.id, c.title, c.content, c.path, s.next_review_at, s.interval_days, s.ease, s.repetitions
+      FROM cards c JOIN schedules s ON s.card_id=c.id
+      WHERE c.archived=0 AND s.next_review_at <= ?
+      ORDER BY s.next_review_at ASC
+      LIMIT ?
+    `).all(ts, limit);
+    return rows;
+  });
+
+  ipcMain.handle('review:card:add', async (_e, payload: { title: string; content: string; path?: string }) => {
+    const id = uuid();
+    const now = Date.now();
+    const tx = db.transaction(() => {
+      db.prepare('INSERT INTO cards (id,title,content,path,archived,created_at,updated_at) VALUES (?,?,?,?,0,?,?)')
+        .run(id, payload.title, payload.content, payload.path || null, now, now);
+      db.prepare('INSERT INTO schedules (card_id,next_review_at,interval_days,ease,repetitions,updated_at) VALUES (?,?,?,?,?,?)')
+        .run(id, now, 0, 2.5, 0, now);
+    });
+    tx();
+    return { id };
+  });
+
+  ipcMain.handle('review:anchor:set', async (_e, payload: { cardId: string; path: string; start: number; end: number; before?: string; after?: string; hash?: string }) => {
+    db.prepare('INSERT OR REPLACE INTO anchors (card_id,path,start,end,anchor_before,anchor_after,hash) VALUES (?,?,?,?,?,?,?)')
+      .run(payload.cardId, payload.path, payload.start, payload.end, payload.before || null, payload.after || null, payload.hash || null);
+    return { ok: true } as const;
+  });
+  ipcMain.handle('review:anchor:get', async (_e, cardId: string) => {
+    const row = db.prepare('SELECT * FROM anchors WHERE card_id=?').get(cardId);
+    return row || null;
+  });
+  ipcMain.handle('review:anchors:byPath', async (_e, filePath: string) => {
+    const rows = db.prepare('SELECT * FROM anchors WHERE path=?').all(filePath);
+    return rows || [];
+  });
+  ipcMain.handle('review:card:updateContent', async (_e, cardId: string, content: string) => {
+    const now = Date.now();
+    db.prepare('UPDATE cards SET content=?, updated_at=? WHERE id=?').run(content, now, cardId);
+    return { ok: true } as const;
+  });
+  ipcMain.handle('review:card:setArchived', async (_e, cardId: string, archived = true) => {
+    const now = Date.now();
+    db.prepare('UPDATE cards SET archived=?, updated_at=? WHERE id=?').run(archived ? 1 : 0, now, cardId);
+    return { ok: true } as const;
+  });
+
+  ipcMain.handle('review:card:rate', async (_e, cardId: string, quality: number) => {
+    const now = Date.now();
+    const s = db.prepare('SELECT * FROM schedules WHERE card_id=?').get(cardId) as any;
+    if (!s) return { ok: false };
+    let repetitions = s.repetitions;
+    let interval_days = s.interval_days;
+    let ease = s.ease;
+    const q = Math.max(0, Math.min(5, Number(quality)));
+    if (q < 3) {
+      repetitions = 0;
+      interval_days = 1;
+    } else {
+      const ef = ease + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02));
+      ease = Math.max(1.3, ef);
+      repetitions = repetitions + 1;
+      if (repetitions === 1) interval_days = 1;
+      else if (repetitions === 2) interval_days = 6;
+      else interval_days = Math.round(interval_days * ease);
+    }
+    const next_review_at = now + interval_days * 24 * 3600 * 1000;
+    const tx = db.transaction(() => {
+      db.prepare('UPDATE schedules SET next_review_at=?, interval_days=?, ease=?, repetitions=?, updated_at=? WHERE card_id=?')
+        .run(next_review_at, interval_days, ease, repetitions, now, cardId);
+      db.prepare('INSERT INTO reviews (id,card_id,reviewed_at,quality,interval_after,ease_after) VALUES (?,?,?,?,?,?)')
+        .run(uuid(), cardId, now, q, interval_days, ease);
+    });
+    tx();
+    return { ok: true, next_review_at, interval_days, ease, repetitions };
+  });
+
+  ipcMain.handle('review:seedMock', async () => {
+    const now = Date.now();
+    const tx = db.transaction(() => {
+      for (let i = 1; i <= 8; i++) {
+        const id = uuid();
+        db.prepare('INSERT OR IGNORE INTO cards (id,title,content,path,archived,created_at,updated_at) VALUES (?,?,?,?,0,?,?)')
+          .run(id, `卡片 ${i}`, `这是第 ${i} 张复习卡片的正反面内容示例。`, null, now, now);
+        db.prepare('INSERT OR REPLACE INTO schedules (card_id,next_review_at,interval_days,ease,repetitions,updated_at) VALUES (?,?,?,?,?,?)')
+          .run(id, now - (i%3)*3600_000, 0, 2.5, 0, now);
+      }
+    });
+    tx();
+    return { ok: true };
+  });
+
+  // --- Cloud sync (Supabase) minimal push/pull ---
+  function getCloudSettings(): { supabaseUrl?: string; supabaseKey?: string } {
+    try {
+      const raw = fs.readFileSync(SETTINGS_PATH!, 'utf-8');
+      const j = JSON.parse(raw);
+      return j.cloud || {};
+    } catch {
+      return {};
+    }
+  }
+  function setCloudSettings(partial: any) {
+    const cur = fs.existsSync(SETTINGS_PATH!) ? JSON.parse(fs.readFileSync(SETTINGS_PATH!, 'utf-8')) : {};
+    const next = { ...cur, cloud: { ...(cur.cloud||{}), ...partial } };
+    fs.writeFileSync(SETTINGS_PATH!, JSON.stringify(next, null, 2), 'utf-8');
+    return next.cloud;
+  }
+  function getSupabase(): SupabaseClient | null {
+    const { supabaseUrl, supabaseKey } = getCloudSettings();
+    if (!supabaseUrl || !supabaseKey) return null;
+    return createClient(supabaseUrl, supabaseKey);
+  }
+
+  ipcMain.handle('cloud:config:get', async () => getCloudSettings());
+  ipcMain.handle('cloud:config:set', async (_e, partial: any) => setCloudSettings(partial));
+
+  ipcMain.handle('cloud:review:pushAll', async () => {
+    const sb = getSupabase(); if (!sb) return { ok: false, error: 'No Supabase config' } as const;
+    const cards = db.prepare('SELECT * FROM cards').all();
+    const anchors = db.prepare('SELECT * FROM anchors').all();
+    const schedules = db.prepare('SELECT * FROM schedules').all();
+    const reviews = db.prepare('SELECT * FROM reviews').all();
+    const tables = [
+      ['cards', cards],
+      ['anchors', anchors],
+      ['schedules', schedules],
+      ['reviews', reviews],
+    ] as const;
+    for (const [name, rows] of tables) {
+      if (rows.length === 0) continue;
+      const { error } = await sb.from(name).upsert(rows as any, { onConflict: name === 'reviews' ? 'id' : 'id' });
+      if (error) return { ok: false, error: `${name}: ${error.message}` } as const;
+    }
+    return { ok: true } as const;
+  });
+
+  ipcMain.handle('cloud:review:pullAll', async () => {
+    const sb = getSupabase(); if (!sb) return { ok: false, error: 'No Supabase config' } as const;
+    const tables = ['cards','anchors','schedules','reviews'] as const;
+    for (const name of tables) {
+      const { data, error } = await sb.from(name).select('*');
+      if (error) return { ok: false, error: `${name}: ${error.message}` } as const;
+      const tx = db.transaction(() => {
+        if (name === 'cards') db.exec('DELETE FROM cards');
+        if (name === 'anchors') db.exec('DELETE FROM anchors');
+        if (name === 'schedules') db.exec('DELETE FROM schedules');
+        if (name === 'reviews') db.exec('DELETE FROM reviews');
+        if (data && data.length) {
+          const cols = Object.keys(data[0] as any);
+          const placeholders = cols.map(() => '?').join(',');
+          const stmt = db.prepare(`INSERT OR REPLACE INTO ${name} (${cols.join(',')}) VALUES (${placeholders})`);
+          for (const row of data as any[]) {
+            stmt.run(...cols.map(c => (row as any)[c]));
+          }
+        }
+      });
+      tx();
+    }
+    return { ok: true } as const;
   });
 
   createWindow();

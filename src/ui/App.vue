@@ -67,6 +67,11 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
             </svg>
           </button>
+          <button :class="navBtn('review')" @click="openReviewTab($event)" title="复习">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.866 0-7 2.239-7 5 0 1.657 1.343 3 3 3h8a3 3 0 003-3c0-2.761-3.134-5-7-5zm0 0V4m0 12v4"/>
+            </svg>
+          </button>
           <div class="flex-1"></div>
           <button :class="navBtn('settings')" @click="openSettingsTab($event)" :title="t('nav.settings')">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,7 +163,7 @@ const activeTabView = computed(() => {
   return (tabgroups.activeTab as any)?.view || null;
 });
 
-function setNav(n: 'home'|'subscriptions'|'search'|'journal'|'settings') { 
+function setNav(n: 'home'|'subscriptions'|'search'|'journal'|'review'|'settings') { 
   layout.setNav(n); 
 }
 
@@ -253,6 +258,12 @@ function openJournalTab(e?: MouseEvent) {
   layout.setNav('journal');
   if (e?.shiftKey) tabgroups.openInLeaf(tabgroups.getNextLeafId(), { title: t('nav.journal'), view: 'journal' });
   else tabgroups.open({ title: t('nav.journal'), view: 'journal' });
+}
+function openReviewTab(e?: MouseEvent) {
+  layout.setNav('review');
+  const title = '复习';
+  if (e?.shiftKey) tabgroups.openInLeaf(tabgroups.getNextLeafId(), { title, view: 'review' });
+  else tabgroups.open({ title, view: 'review' });
 }
 function openSettingsTab(e?: MouseEvent) {
   layout.setNav('settings');
