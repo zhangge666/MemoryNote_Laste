@@ -1,12 +1,8 @@
 <template>
 <div class="h-9 border-b flex items-center gap-1 px-1 overflow-hidden select-none relative"
-     @click.self="menuOpen=false"
+     @click.self="menuOpen=false; moreOpen=false"
      @dragover.prevent="onContainerDragOver"
      @drop="onContainerDrop">
-    <div class="flex items-center gap-1 pr-2 border-r mr-1">
-      <button class="px-1 text-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" @click="splitRight" title="分屏到右侧 (Shift 在另一叶打开)">⇢</button>
-      <button class="px-1 text-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" @click="splitDown" title="分屏到下方 (Shift 在另一叶打开)">⇣</button>
-    </div>
     <div v-for="(tab, idx) in leaf.items" :key="tab.id"
          class="px-2 h-7 flex items-center rounded cursor-pointer hover:bg-neutral-200 dark:hover:bg-neutral-700"
          :class="{ 'bg-neutral-200 dark:bg-neutral-700': tab.id === leaf.activeId }"
@@ -20,6 +16,12 @@
       <span v-if="tab.dirty" class="ml-1 text-amber-500">●</span>
       <button class="ml-2 text-neutral-500 hover:text-neutral-800" @click.stop="close(leafId, tab.id)">×</button>
     </div>
+    <div class="flex-1" />
+    <div class="flex items-center gap-1 pl-2 border-l ml-1">
+      <button class="px-1 text-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" @click="splitRight" title="分屏到右侧 (Shift 在另一叶打开)">⇢</button>
+      <button class="px-1 text-xs hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" @click="splitDown" title="分屏到下方 (Shift 在另一叶打开)">⇣</button>
+      <button class="px-2 h-7 text-sm hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded" @click="openMore($event)" title="更多">⋯</button>
+    </div>
     <!-- click-away overlay -->
     <div v-if="menuOpen" class="fixed inset-0 z-[9998]" @click="menuOpen=false"></div>
     <!-- context menu (fixed to avoid clipping by overflow) -->
@@ -28,6 +30,12 @@
       <div class="px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer" @click="closeOthers(leafId, menuTabId); menuOpen=false">Close Others</div>
       <div class="px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer" @click="splitTabTo(menuTabId, 'row'); menuOpen=false">Open to Right</div>
       <div class="px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer" @click="splitTabTo(menuTabId, 'col'); menuOpen=false">Open to Bottom</div>
+    </div>
+    <!-- more menu overlay -->
+    <div v-if="moreOpen" class="fixed inset-0 z-[9998]" @click="moreOpen=false"></div>
+    <div v-if="moreOpen" class="fixed z-[9999] bg-white dark:bg-neutral-800 border rounded shadow text-sm min-w-[200px]" :style="{ left: moreX+'px', top: moreY+'px' }">
+      <div class="px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer" @click="onCloseAll(false)">关闭全部</div>
+      <div class="px-3 py-1 hover:bg-neutral-100 dark:hover:bg-neutral-700 cursor-pointer" @click="onCloseAll(true)">关闭全部并保存</div>
     </div>
   </div>
 </template>
@@ -41,7 +49,10 @@ const store = useTabGroupsStore();
 const leaf = computed(() => store.findLeaf(props.leafId) || { id: props.leafId, items: [], activeId: '' } as any);
 
 const { setActive, close, closeOthers, moveTab, duplicateTabTo, splitLeafTo } = store as any;
+import { useEditorStore } from '../../stores/editor';
+const editor = useEditorStore();
 const menuOpen = ref(false);
+const moreOpen = ref(false);
 // drag & drop state
 const drag = ref<{ fromLeafId: string; tabId: string; fromIndex: number } | null>(null);
 
@@ -87,12 +98,44 @@ function onContainerDrop(e: DragEvent) {
 const menuX = ref(0);
 const menuY = ref(0);
 const menuTabId = ref('');
+const moreX = ref(0);
+const moreY = ref(0);
 
 function splitRight() {
   splitActiveTo('row');
 }
 function splitDown() {
   splitActiveTo('col');
+}
+
+function openMore(e: MouseEvent) {
+  moreOpen.value = true;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const padding = 8;
+  const mx = (e as MouseEvent).clientX;
+  const my = (e as MouseEvent).clientY;
+  const estW = 220;
+  const estH = 100;
+  moreX.value = Math.min(mx, vw - estW - padding);
+  moreY.value = Math.min(my, vh - estH - padding);
+}
+
+function onCloseAll(saveBefore: boolean) {
+  if (saveBefore) {
+    // 先保存当前叶的所有可保存文件
+    for (const t of leaf.value.items) {
+      if ((t as any).path && (t as any).dirty) {
+        // 临时将该标签设为激活以复用现有保存逻辑
+        setActive(leaf.value.id, t.id);
+        editor.saveActive();
+      }
+    }
+  }
+  // 关闭全部
+  const ids = leaf.value.items.map(t => t.id);
+  for (const id of ids) close(leaf.value.id, id);
+  moreOpen.value = false;
 }
 
 function openMenu(e: MouseEvent, id: string) {
