@@ -1,0 +1,46 @@
+{
+  "id": "oceanic",
+  "name": "海洋蓝调",
+  "author": "MemoryNote Community",
+  "version": "1.0.0",
+  "description": "深邃的海洋蓝色主题，带来宁静的编辑体验",
+  "colors": {
+    "primary": {
+      "50": "240 249 255",
+      "100": "224 242 254",
+      "500": "14 165 233",
+      "600": "2 132 199",
+      "700": "3 105 161"
+    },
+    "accent": {
+      "50": "236 254 255",
+      "100": "207 250 254",
+      "500": "6 182 212",
+      "600": "8 145 178",
+      "700": "14 116 144"
+    },
+    "surface": {
+      "50": "248 250 252",
+      "100": "241 245 249",
+      "200": "226 232 240",
+      "700": "51 65 85",
+      "800": "30 41 59",
+      "900": "15 23 42"
+    }
+  },
+  "fonts": {
+    "family": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+    "editorSize": "15px",
+    "editorLineHeight": "1.7"
+  },
+  "shadows": {
+    "sm": "0 1px 2px 0 rgb(0 0 0 / 0.08)",
+    "md": "0 4px 6px -1px rgb(0 0 0 / 0.12)",
+    "lg": "0 10px 15px -3px rgb(0 0 0 / 0.15)"
+  },
+  "borderRadius": {
+    "default": "10px",
+    "lg": "16px"
+  }
+}
+

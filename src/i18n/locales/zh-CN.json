@@ -1,0 +1,121 @@
+{
+  "titlebar": {
+    "toggleLeft": "切换左侧栏",
+    "toggleRight": "切换右侧栏",
+    "search": "搜索"
+  },
+  "nav": {
+    "home": "首页",
+    "subscriptions": "订阅",
+    "search": "搜索",
+    "journal": "日记",
+    "settings": "设置"
+  },
+  "left": {
+    "explorer": "资源管理器",
+    "placeholder": "此处将显示工作区目录树"
+  },
+  "tabs": {
+    "bar": "标签栏"
+  },
+  "content": {
+    "placeholder": "这里是内容区域，后续会接入标签分屏"
+  },
+  "right": {
+    "panel": "右侧面板",
+    "placeholder": "此处将显示复习/插件/笔记信息等"
+  },
+  "status": {
+    "connected": "已连接",
+    "workspaceInfo": "工作区信息",
+    "save": "保存"
+  },
+  "settings": {
+    "language": "语言",
+    "theme": "主题",
+    "workspace": "工作目录",
+    "browse": "浏览",
+    "editor": "编辑器",
+    "fontSize": "字号",
+    "lineHeight": "行高",
+    "autosave": "自动保存",
+    "autosaveOff": "关闭",
+    "autosaveDelay": "延迟保存",
+    "keepSessionOnWorkspaceChange": "切换工作目录时保留会话"
+  },
+  "home": {
+    "title": "知识库",
+    "subtitle": "您的个人知识管理系统",
+    "stats": {
+      "files": "文件",
+      "folders": "文件夹",
+      "workspace": "工作区"
+    },
+    "quickActions": {
+      "title": "快捷操作",
+      "newNote": "新建笔记",
+      "rebuildIndex": "重建索引",
+      "openFolder": "打开文件夹",
+      "refresh": "刷新"
+    },
+    "recent": {
+      "title": "最近文件",
+      "empty": "暂无最近文件",
+      "refresh": "刷新"
+    }
+  },
+  "subscriptions": {
+    "title": "订阅",
+    "subtitle": "监控特定文件夹或文件的变更",
+    "comingSoon": "即将推出",
+    "features": {
+      "watch": "监控特定目录变更",
+      "rss": "RSS 订阅源集成",
+      "notifications": "更新邮件通知"
+    }
+  },
+  "journal": {
+    "title": "日记",
+    "subtitle": "记录每日思考与感悟",
+    "todayEntry": "今日日记",
+    "comingSoon": "即将推出",
+    "features": {
+      "templates": "日记模板",
+      "calendar": "日历视图",
+      "mood": "心情追踪",
+      "search": "跨日记搜索"
+    }
+  },
+  "settingsPage": {
+    "title": "设置",
+    "subtitle": "配置您的知识库体验",
+    "about": "关于",
+    "version": "版本",
+    "description": "基于AI的个人知识库系统",
+    "actions": {
+      "viewLogs": "查看日志",
+      "exportSettings": "导出设置",
+      "resetAll": "重置所有设置"
+    },
+    "sections": {
+      "general": "基本设置",
+      "editor": "编辑器",
+      "ai": "AI 设置",
+      "plugins": "插件管理",
+      "advanced": "高级设置",
+      "about": "关于"
+    }
+  },
+  "explorer": {
+    "title": "资源管理器",
+    "newFile": "新建文件",
+    "newFolder": "新建文件夹",
+    "refresh": "刷新",
+    "contextMenu": {
+      "rename": "重命名",
+      "delete": "删除",
+      "openInSystem": "在系统中打开"
+    }
+  }
+}
+

@@ -1,0 +1,120 @@
+{
+  "titlebar": {
+    "toggleLeft": "Toggle Left Panel",
+    "toggleRight": "Toggle Right Panel",
+    "search": "Search"
+  },
+  "nav": {
+    "home": "Home",
+    "subscriptions": "Subscriptions",
+    "search": "Search",
+    "journal": "Journal",
+    "settings": "Settings"
+  },
+  "left": {
+    "explorer": "Explorer",
+    "placeholder": "Workspace file tree will be shown here"
+  },
+  "tabs": {
+    "bar": "Tabs"
+  },
+  "content": {
+    "placeholder": "Content area placeholder, split tabs will be added"
+  },
+  "right": {
+    "panel": "Right Panel",
+    "placeholder": "Reviews / Plugins / Note info will show here"
+  },
+  "status": {
+    "connected": "Connected",
+    "workspaceInfo": "Workspace info",
+    "save": "Save"
+  },
+  "settings": {
+    "language": "Language",
+    "theme": "Theme",
+    "workspace": "Workspace",
+    "browse": "Browse",
+    "editor": "Editor",
+    "fontSize": "Font Size",
+    "lineHeight": "Line Height",
+    "autosave": "Autosave",
+    "autosaveOff": "Off",
+    "autosaveDelay": "After Delay",
+    "keepSessionOnWorkspaceChange": "Keep session when workspace changes"
+  },
+  "home": {
+    "title": "Knowledge Base",
+    "subtitle": "Your Personal Knowledge Management System",
+    "stats": {
+      "files": "Files",
+      "folders": "Folders",
+      "workspace": "Workspace"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "newNote": "New Note",
+      "rebuildIndex": "Rebuild Index",
+      "openFolder": "Open Folder",
+      "refresh": "Refresh"
+    },
+    "recent": {
+      "title": "Recent Files",
+      "empty": "No recent files",
+      "refresh": "Refresh"
+    }
+  },
+  "subscriptions": {
+    "title": "Subscriptions",
+    "subtitle": "Monitor changes in specific folders or files",
+    "comingSoon": "Coming Soon",
+    "features": {
+      "watch": "Watch specific directories for changes",
+      "rss": "RSS feed integration",
+      "notifications": "Email notifications for updates"
+    }
+  },
+  "journal": {
+    "title": "Journal",
+    "subtitle": "Daily notes and reflections",
+    "todayEntry": "Today's Entry",
+    "comingSoon": "Coming Soon",
+    "features": {
+      "templates": "Daily journal templates",
+      "calendar": "Calendar view",
+      "mood": "Mood tracking",
+      "search": "Search across entries"
+    }
+  },
+  "settingsPage": {
+    "title": "Settings",
+    "subtitle": "Configure your knowledge base experience",
+    "about": "About",
+    "version": "Version",
+    "description": "AI-powered Personal Knowledge Base System",
+    "actions": {
+      "viewLogs": "View Logs",
+      "exportSettings": "Export Settings",
+      "resetAll": "Reset All Settings"
+    },
+    "sections": {
+      "general": "General",
+      "editor": "Editor",
+      "ai": "AI Settings",
+      "plugins": "Plugin Management",
+      "advanced": "Advanced",
+      "about": "About"
+    }
+  },
+  "explorer": {
+    "title": "Explorer",
+    "newFile": "New File",
+    "newFolder": "New Folder",
+    "refresh": "Refresh",
+    "contextMenu": {
+      "rename": "Rename",
+      "delete": "Delete",
+      "openInSystem": "Open in System"
+    }
+  }
+}

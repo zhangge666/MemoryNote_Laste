@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+/* CSS Variables for theming */
+:root {
+  /* Default theme colors (Light) */
+  --color-primary-50: 239 246 255;
+  --color-primary-100: 219 234 254;
+  --color-primary-500: 59 130 246;
+  --color-primary-600: 37 99 235;
+  --color-primary-700: 29 78 216;
+  
+  --color-accent-50: 250 245 255;
+  --color-accent-100: 243 232 255;
+  --color-accent-500: 147 51 234;
+  --color-accent-600: 126 34 206;
+  --color-accent-700: 109 40 217;
+  
+  --color-surface-50: 248 250 252;
+  --color-surface-100: 241 245 249;
+  --color-surface-200: 226 232 240;
+  --color-surface-700: 51 65 85;
+  --color-surface-800: 30 41 59;
+  --color-surface-900: 15 23 42;
+  
+  /* Editor settings */
+  --editor-font-size: 14px;
+  --editor-line-height: 1.6;
+  --font-family: -apple-system;
+  
+  /* Borders and shadows */
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+}
+
+/* Dark theme overrides */
+.dark {
+  --color-primary-50: 30 41 59;
+  --color-primary-100: 51 65 85;
+  --color-primary-500: 96 165 250;
+  --color-primary-600: 59 130 246;
+  --color-primary-700: 37 99 235;
+  
+  --color-accent-50: 30 27 75;
+  --color-accent-100: 67 56 202;
+  --color-accent-500: 168 85 247;
+  --color-accent-600: 147 51 234;
+  --color-accent-700: 126 34 206;
+  
+  --color-surface-50: 2 6 23;
+  --color-surface-100: 15 23 42;
+  --color-surface-200: 30 41 59;
+  --color-surface-700: 203 213 225;
+  --color-surface-800: 226 232 240;
+  --color-surface-900: 248 250 252;
+}
+
+html, body, #app {
+  height: 100%;
+  font-family: var(--font-family), 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+}
+
+/* Global styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Smooth transitions for theme changes */
+*,
+*::before,
+*::after {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-surface-200));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-surface-700) / 0.7);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgb(var(--color-surface-700));
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--color-surface-200) / 0.3);
+}
+
+/* Focus styles */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px rgb(var(--color-primary-500) / 0.5);
+}
+
+/* Animation utilities */
+.animate-in {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.animate-bounce-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
